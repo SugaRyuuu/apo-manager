@@ -1,0 +1,375 @@
+:root {
+  --bg: #f4efe6;
+  --paper: #fffaf2;
+  --ink: #1d1c1a;
+  --muted: #6d675f;
+  --line: #d8cbb5;
+  --accent: #b5542f;
+  --accent-strong: #8f3d1d;
+  --accent-soft: #f1d1b5;
+  --danger: #9b2434;
+  --olive: #44624a;
+  --shadow: 0 18px 40px rgba(62, 43, 30, 0.12);
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(181, 84, 47, 0.14), transparent 28%),
+    linear-gradient(180deg, #f5ebdc, #f3f0ea 45%, #efe8de);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.app-shell {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 20px;
+  align-items: start;
+  margin-bottom: 20px;
+}
+
+.hero h1,
+.panel h2,
+.availability-card h3,
+.date-group-head h3 {
+  margin: 0;
+  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+}
+
+.hero h1 {
+  font-size: clamp(2.6rem, 6vw, 4.3rem);
+  line-height: 0.96;
+  letter-spacing: -0.04em;
+}
+
+.hero-copy,
+.helper,
+.appointment-school,
+.appointment-traits {
+  color: var(--muted);
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--accent-strong);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.72rem;
+  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+}
+
+.identity-panel,
+.panel,
+.availability-card {
+  background: rgba(255, 250, 242, 0.88);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(216, 203, 181, 0.8);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+}
+
+.identity-panel,
+.panel {
+  padding: 20px;
+}
+
+.top-nav {
+  display: inline-flex;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(216, 203, 181, 0.8);
+  background: rgba(255, 250, 242, 0.8);
+  margin-bottom: 20px;
+}
+
+.nav-btn,
+.month-tab,
+.primary-btn,
+.secondary-btn,
+.ghost-btn,
+.danger-btn {
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+
+.nav-btn,
+.month-tab,
+.ghost-btn {
+  padding: 10px 16px;
+  background: transparent;
+  color: var(--muted);
+}
+
+.nav-btn.active,
+.month-tab.active {
+  background: var(--ink);
+  color: #fff;
+}
+
+.primary-btn,
+.secondary-btn,
+.danger-btn {
+  padding: 12px 18px;
+  color: #fff;
+  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+}
+
+.primary-btn {
+  background: var(--accent);
+}
+
+.secondary-btn {
+  background: var(--olive);
+}
+
+.danger-btn {
+  background: var(--danger);
+}
+
+.ghost-btn {
+  border: 1px solid var(--line);
+}
+
+.primary-btn:hover,
+.secondary-btn:hover,
+.ghost-btn:hover,
+.danger-btn:hover,
+.nav-btn:hover,
+.month-tab:hover {
+  transform: translateY(-1px);
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) 1fr;
+  gap: 20px;
+}
+
+.shift-grid {
+  align-items: start;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 18px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.field span {
+  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  font-size: 0.9rem;
+}
+
+.field.compact {
+  min-width: 240px;
+}
+
+.stack-form {
+  display: grid;
+}
+
+.inline-form {
+  display: flex;
+  gap: 12px;
+  align-items: end;
+}
+
+.grow {
+  flex: 1;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: #fffdf8;
+  padding: 12px 14px;
+  color: var(--ink);
+}
+
+textarea {
+  resize: vertical;
+}
+
+.summary-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.summary-strip > div {
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--accent-soft);
+  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+}
+
+.date-groups,
+.cards {
+  display: grid;
+  gap: 16px;
+}
+
+.date-group {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.date-group-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.appointment-card {
+  padding: 16px;
+  border-radius: 18px;
+  background: #fffdf8;
+  border: 1px solid rgba(216, 203, 181, 0.8);
+}
+
+.appointment-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+}
+
+.appointment-name {
+  margin: 0 0 6px;
+}
+
+.badge-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: end;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #f2eadf;
+  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  font-size: 0.84rem;
+}
+
+.card-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
+}
+
+.month-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.availability-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.availability-card {
+  padding: 18px;
+}
+
+.muted-card {
+  background: rgba(241, 209, 181, 0.45);
+}
+
+.name-list {
+  list-style: none;
+  padding: 0;
+  margin: 14px 0 0;
+  display: grid;
+  gap: 10px;
+}
+
+.name-list li {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #fffdf8;
+  border: 1px solid rgba(216, 203, 181, 0.7);
+}
+
+.empty-state,
+.empty-item {
+  color: var(--muted);
+}
+
+.hidden {
+  display: none;
+}
+
+@media (max-width: 980px) {
+  .hero,
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-head,
+  .appointment-main,
+  .card-actions,
+  .inline-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .summary-strip,
+  .availability-columns {
+    grid-template-columns: 1fr;
+  }
+}
