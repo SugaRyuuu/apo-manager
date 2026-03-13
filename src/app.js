@@ -1,7 +1,6 @@
 import {
   SHIFT_OPTIONS,
   buildAppointmentRecord,
-  createMember,
   formatDate,
   getDatesForMonth,
   getShiftAvailabilityLists,
@@ -9,29 +8,37 @@ import {
   getShiftMonths,
   groupAppointmentsByDate,
   softDeleteAppointment,
-  upsertShift,
   validateAppointment,
   validateMemberName,
 } from "./logic.js";
 import {
+  createMemberRecord,
   loadState,
-  saveAppointments,
   saveCurrentMemberId,
-  saveMembers,
-  saveShifts,
+  refreshState,
+  saveAppointmentRecord,
+  saveShiftRecord,
+  softDeleteAppointmentRecord,
 } from "./storage.js";
 
 const state = {
-  ...loadState(),
+  members: [],
+  appointments: [],
+  shifts: [],
+  currentMemberId: null,
   activeView: "appointments",
   activeShiftMonthKey: getShiftMonths()[0].key,
   editingAppointmentId: null,
+  loading: true,
+  busy: false,
+  errorMessage: "",
 };
 
 const elements = {
   currentMemberSelect: document.querySelector("#current-member-select"),
   memberCreateForm: document.querySelector("#member-create-form"),
   newMemberName: document.querySelector("#new-member-name"),
+  statusBanner: document.querySelector("#status-banner"),
   navButtons: [...document.querySelectorAll(".nav-btn")],
   views: {
     appointments: document.querySelector("#appointments-view"),
@@ -72,6 +79,35 @@ function getCurrentMember() {
 function setCurrentMember(memberId) {
   state.currentMemberId = memberId;
   saveCurrentMemberId(memberId);
+}
+
+function setStatus(message = "", tone = "info") {
+  state.errorMessage = message;
+  elements.statusBanner.textContent = message;
+  elements.statusBanner.dataset.tone = tone;
+  elements.statusBanner.classList.toggle("hidden", !message);
+}
+
+function setBusy(nextBusy) {
+  state.busy = nextBusy;
+  const controls = [
+    elements.currentMemberSelect,
+    elements.newMemberName,
+    elements.appointmentSearch,
+    elements.shiftDateSelect,
+    elements.shiftAvailabilitySelect,
+    elements.shiftDayLookup,
+    ...elements.navButtons,
+    ...document.querySelectorAll("button"),
+    ...document.querySelectorAll("input"),
+    ...document.querySelectorAll("select"),
+    ...document.querySelectorAll("textarea"),
+  ];
+  for (const control of controls) {
+    if (control) {
+      control.disabled = nextBusy;
+    }
+  }
 }
 
 function renderMemberOptions() {
@@ -172,17 +208,26 @@ function renderAppointments() {
         actions.innerHTML = `<p class="helper">自分が担当のアポのみ編集できます。</p>`;
       } else {
         card.querySelector(".edit-btn").addEventListener("click", () => startAppointmentEdit(appointment.id));
-        card.querySelector(".delete-btn").addEventListener("click", () => {
+        card.querySelector(".delete-btn").addEventListener("click", async () => {
           const confirmed = window.confirm(`${appointment.name} さんのアポを削除しますか？`);
           if (!confirmed) return;
-          state.appointments = state.appointments.map((item) =>
-            item.id === appointment.id ? softDeleteAppointment(item) : item,
-          );
-          saveAppointments(state.appointments);
-          if (state.editingAppointmentId === appointment.id) {
-            resetAppointmentForm();
+          try {
+            setBusy(true);
+            setStatus("");
+            const deletedRecord = softDeleteAppointment(appointment);
+            const saved = await softDeleteAppointmentRecord(deletedRecord);
+            state.appointments = state.appointments.map((item) =>
+              item.id === saved.id ? saved : item,
+            );
+            if (state.editingAppointmentId === appointment.id) {
+              resetAppointmentForm();
+            }
+            renderAppointments();
+          } catch (error) {
+            setStatus(error.message, "error");
+          } finally {
+            setBusy(false);
           }
-          renderAppointments();
         });
       }
 
@@ -290,22 +335,31 @@ function bindEvents() {
     renderShiftDateSelects();
   });
 
-  elements.memberCreateForm.addEventListener("submit", (event) => {
+  elements.memberCreateForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const error = validateMemberName(elements.newMemberName.value, state.members);
     if (error) {
-      window.alert(error);
+      setStatus(error, "error");
       return;
     }
 
-    const member = createMember(elements.newMemberName.value);
-    state.members = [...state.members, member];
-    saveMembers(state.members);
-    setCurrentMember(member.id);
-    elements.newMemberName.value = "";
-    renderMemberOptions();
-    renderAppointments();
-    renderShiftDateSelects();
+    try {
+      setBusy(true);
+      setStatus("");
+      const member = await createMemberRecord(elements.newMemberName.value, state.members);
+      state.members = [...state.members, member].sort((a, b) =>
+        a.displayName.localeCompare(b.displayName, "ja"),
+      );
+      setCurrentMember(member.id);
+      elements.newMemberName.value = "";
+      renderMemberOptions();
+      renderAppointments();
+      renderShiftDateSelects();
+    } catch (submitError) {
+      setStatus(submitError.message, "error");
+    } finally {
+      setBusy(false);
+    }
   });
 
   for (const button of elements.navButtons) {
@@ -315,7 +369,7 @@ function bindEvents() {
     });
   }
 
-  elements.appointmentForm.addEventListener("submit", (event) => {
+  elements.appointmentForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const previousRecord = state.appointments.find(
       (appointment) => appointment.id === elements.appointmentFields.id.value,
@@ -335,24 +389,34 @@ function bindEvents() {
 
     const error = validateAppointment(record, state.appointments);
     if (error) {
-      window.alert(error);
+      setStatus(error, "error");
       return;
     }
 
     const isEditingOthersRecord =
       previousRecord && previousRecord.ownerMemberId !== state.currentMemberId;
     if (isEditingOthersRecord) {
-      window.alert("自分が担当のアポのみ編集できます。");
+      setStatus("自分が担当のアポのみ編集できます。", "error");
       return;
     }
 
-    const nextAppointments = previousRecord
-      ? state.appointments.map((appointment) => (appointment.id === record.id ? record : appointment))
-      : [...state.appointments, record];
-    state.appointments = nextAppointments;
-    saveAppointments(state.appointments);
-    resetAppointmentForm();
-    renderAppointments();
+    try {
+      setBusy(true);
+      setStatus("");
+      const savedRecord = await saveAppointmentRecord(record);
+      const nextAppointments = previousRecord
+        ? state.appointments.map((appointment) =>
+            appointment.id === savedRecord.id ? savedRecord : appointment,
+          )
+        : [...state.appointments, savedRecord];
+      state.appointments = nextAppointments;
+      resetAppointmentForm();
+      renderAppointments();
+    } catch (submitError) {
+      setStatus(submitError.message, "error");
+    } finally {
+      setBusy(false);
+    }
   });
 
   elements.appointmentCancelBtn.addEventListener("click", () => {
@@ -372,16 +436,32 @@ function bindEvents() {
     );
   });
 
-  elements.shiftForm.addEventListener("submit", (event) => {
+  elements.shiftForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const currentMember = getCurrentMember();
-    state.shifts = upsertShift(state.shifts, {
-      memberId: currentMember.id,
-      shiftDate: elements.shiftDateSelect.value,
-      availability: elements.shiftAvailabilitySelect.value,
-    });
-    saveShifts(state.shifts);
-    renderShiftDayLists();
+    try {
+      setBusy(true);
+      setStatus("");
+      const savedShift = await saveShiftRecord({
+        memberId: currentMember.id,
+        shiftDate: elements.shiftDateSelect.value,
+        availability: elements.shiftAvailabilitySelect.value,
+        updatedAt: new Date().toISOString(),
+      });
+      const remaining = state.shifts.filter(
+        (shift) =>
+          !(
+            shift.memberId === savedShift.memberId &&
+            shift.shiftDate === savedShift.shiftDate
+          ),
+      );
+      state.shifts = [...remaining, savedShift].sort((a, b) => a.shiftDate.localeCompare(b.shiftDate));
+      renderShiftDayLists();
+    } catch (submitError) {
+      setStatus(submitError.message, "error");
+    } finally {
+      setBusy(false);
+    }
   });
 
   elements.shiftDayLookup.addEventListener("change", () => {
@@ -389,7 +469,22 @@ function bindEvents() {
   });
 }
 
-function init() {
+async function init() {
+  try {
+    setBusy(true);
+    setStatus("Supabase からデータを読み込んでいます。");
+    const loadedState = await loadState();
+    state.members = loadedState.members;
+    state.appointments = loadedState.appointments;
+    state.shifts = loadedState.shifts;
+    state.currentMemberId = loadedState.currentMemberId;
+  } catch (error) {
+    setStatus(error.message, "error");
+    return;
+  } finally {
+    setBusy(false);
+  }
+
   renderMemberOptions();
   renderView();
   renderShiftMonthTabs();
@@ -398,6 +493,7 @@ function init() {
   resetAppointmentForm();
   renderAppointments();
   bindEvents();
+  setStatus("Supabase 同期中。別ブラウザでも同じデータを参照します。", "success");
 }
 
 init();

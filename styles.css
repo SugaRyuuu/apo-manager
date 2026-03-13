@@ -102,6 +102,26 @@ textarea {
   margin-bottom: 20px;
 }
 
+.status-banner {
+  margin: 0 0 20px;
+  padding: 14px 18px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 250, 242, 0.85);
+  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+}
+
+.status-banner[data-tone="error"] {
+  color: #fff;
+  background: var(--danger);
+  border-color: transparent;
+}
+
+.status-banner[data-tone="success"] {
+  background: rgba(68, 98, 74, 0.18);
+  color: #18311d;
+}
+
 .nav-btn,
 .month-tab,
 .primary-btn,
