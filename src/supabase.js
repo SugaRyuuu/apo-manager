@@ -6,25 +6,13 @@ const SUPABASE_PUBLISHABLE_KEY =
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    persistSession: true,
-    autoRefreshToken: true,
+    persistSession: false,
+    autoRefreshToken: false,
   },
 });
 
 export async function ensureSupabaseSession() {
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) {
-    throw sessionError;
-  }
-  if (sessionData.session) {
-    return sessionData.session;
-  }
-
-  const { data, error } = await supabase.auth.signInAnonymously();
-  if (error) {
-    throw error;
-  }
-  return data.session;
+  return null;
 }
 
 export function isMissingTableError(error) {
